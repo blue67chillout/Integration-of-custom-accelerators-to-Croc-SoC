@@ -94,7 +94,7 @@ Cell/Module placement                      |  Routing
 
 ### Local Installation
 
-RISC-V Toolchain Install 
+#### RISC-V Toolchain Install 
 
 ```sh
 wget https://github.com/xpack-dev-tools/riscv-none-elf-gcc-xpack/releases/download/v14.2.0-2/xpack-riscv-none-elf-gcc-14.2.0-2-linux-x64.tar.gz
@@ -111,7 +111,7 @@ or
 echo 'PATH="/opt/xpack-riscv-none-elf-gcc-14.2.0-2/bin:$PATH"' >> .zshrc
 ```
 
-Yosys & Verilator Install
+#### Yosys & Verilator Install
 
 - Download an archive matching your OS from the releases page [https://github.com/YosysHQ/oss-cad-suite-build/releases/tag/2026-01-05].
 - Extract the archive to a location of your choice (for Windows it is recommended that path does not contain spaces)
@@ -126,7 +126,7 @@ export PATH="<extracted_location>/oss-cad-suite/bin:$PATH"
 source <extracted_location>/oss-cad-suite/environment
 ```
 
-OpenRoad Install
+#### OpenRoad Install
 
 Download the relevant debian package from the release page [https://github.com/Precision-Innovations/OpenROAD/releases]
 
@@ -137,7 +137,7 @@ Then install it through apt
 sudo apt install ./openroad_2.0_amd64-ubuntu20.04.deb
 
 ```
-Bender Install
+#### Bender Install
 
 ```sh
 curl --proto '=https' --tlsv1.2 https://pulp-platform.github.io/bender/init -sSf | sh
