@@ -320,9 +320,16 @@ Each accelerator occupies 4KB of address space. Addresses are word-aligned (incr
 
 #### Hardware Test (C Software)
 
-Create a test program in `sw/your_accel_test.c`:
+Create a test program in `sw/your_accel_test.c` and compile it using the riscv toolchain
 
-You can find an example inside sw/mac_test.c
+```sh
+
+cd sw && make compile
+
+```
+
+You can find an example inside `sw/mac_test.c`
+
 
 #### RTL Simulation
 
