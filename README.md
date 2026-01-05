@@ -92,33 +92,59 @@ Cell/Module placement                      |  Routing
 ![Chip module view](doc/croc_modules.jpg)  |  ![Chip routed](doc/croc_routed.jpg)
 
 
-## Requirements
-We are using the excellent docker container maintained by Harald Pretl. If you get stuck with installing the tools, we urge you to check the [Tool Repository](https://github.com/iic-jku/IIC-OSIC-TOOLS).  
-The current supported version is 2025.03, no other version is officially supported.
+### Local Installation
 
-### ETHZ systems
-ETHZ Design Center maintains an internal version of the IHP PDK, with integrations into all tools we have access to. For this reason if you work on the ETH systems it is recommended to use the `icdesign` tool (cockpit) instead of the liked Github repo.  
-You can directly create a cockpit directory inside the croc directory:
+RISC-V Toolchain Install 
+
 ```sh
-# Make sure you are in <somedir>/croc
-# the checked-out repository
-icdesign ihp13 -nogui
+wget https://github.com/xpack-dev-tools/riscv-none-elf-gcc-xpack/releases/download/v14.2.0-2/xpack-riscv-none-elf-gcc-14.2.0-2-linux-x64.tar.gz
+tar -xzf xpack-riscv-none-elf-gcc-14.2.0-2-linux-x64.tar.gz -C /opt
+
 ```
-The setup is guided by the `.cockpitrc` configuration file. If you need different macros or another version of the standard cells you can change it accordingly.
+Just append the export of this newly installed riscv toolchain path later to your .[shell]rc file
 
-An environment setup for bash is provided to get easy access to the tools:
 ```sh
-source ethz.env
-```
+echo 'PATH="/opt/xpack-riscv-none-elf-gcc-14.2.0-2/bin:$PATH"' >> .bashrc
 
-Additionally you may prefer to just enter a shell in the pre-installed osic-tools container using:
-```sh
-oseda bash
-# older version eg: oseda -2025.03 bash
+or 
+
+echo 'PATH="/opt/xpack-riscv-none-elf-gcc-14.2.0-2/bin:$PATH"' >> .zshrc
 ```
 
-### Other systems
-**Note: this has currently only been tested on Ubuntu and RHEL Linux.**
+Yosys & Verilator Install
+
+- Download an archive matching your OS from the releases page [https://github.com/YosysHQ/oss-cad-suite-build/releases/tag/2026-01-05].
+- Extract the archive to a location of your choice (for Windows it is recommended that path does not contain spaces)
+- On macOS to allow execution of quarantined files xattr -d com.apple.quarantine oss-cad-suite-darwin-x64-yyymmdd.tgz on downloaded file, or run: ./activate in extracted location once.
+- Set the environment as described below
+
+```sh
+export PATH="<extracted_location>/oss-cad-suite/bin:$PATH"
+
+# or
+
+source <extracted_location>/oss-cad-suite/environment
+```
+
+OpenRoad Install
+
+Download the relevant debian package from the release page [https://github.com/Precision-Innovations/OpenROAD/releases]
+
+Then install it through apt
+
+```sh
+
+sudo apt install ./openroad_2.0_amd64-ubuntu20.04.deb
+
+```
+Bender Install
+
+```sh
+curl --proto '=https' --tlsv1.2 https://pulp-platform.github.io/bender/init -sSf | sh
+
+```
+This installs bender in your current directory, recommended to move the binary to /usr/bin
+
 
 #### Docker (easy) 
 There are two possible ways, the easiest way is to install docker and work in the docker container, you can follow the install guides on the [Docker Website](https://docs.docker.com/desktop/).  
