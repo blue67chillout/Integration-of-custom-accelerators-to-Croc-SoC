@@ -170,37 +170,21 @@ You should see the files in this repository again.
 Now you should be in an Ubuntu environment with all tools pre-installed for you.  
 If something does not work, refer to the upstream [IIC-OSIC-Tools](https://github.com/iic-jku/IIC-OSIC-TOOLS/tree/main)
 
-#### Native install (hard)
-You need to build/install the required tools manually:
-
-- [Bender](https://github.com/pulp-platform/bender#installation): Dependency manager
-- [Yosys](https://github.com/YosysHQ/yosys#building-from-source): Synthesis tool
-- [Yosys-Slang](https://github.com/povik/yosys-slang): SystemVerilog frontend for Yosys
-- [OpenRoad](https://github.com/The-OpenROAD-Project/OpenROAD/blob/master/docs/user/Build.md): Place & Route tool
-- (Optional) [Verilator](https://github.com/verilator/verilator): Simulator
-- (Optional) Questasim/Modelsim: Simulator
-
 
 ## Getting started
 The SoC is fully functional as-is and a simple software example is provided for simulation.
 To run the synthesis and place & route flow execute:
 ```sh
-make checkout
-make yosys
-make openroad
-make klayout
+make checkout # fetched ihp130 pdk files
+make yosys # generates flattened netlist from the source RTL files
+make openroad # performs placement, routing and lef file generation
+make klayout # streams gds from the generated lef file
 ```
 
 To simulate you can use:
 ```sh
 make verilator
 ```
-
-If you have Questasim/Modelsim, you can also run:
-```sh
-make vsim
-```
-
 
 The most important make targets are documented, you can list them with:
 ```sh
@@ -217,6 +201,188 @@ make yosys-flist
 ```
 
 If you want to add an existing design and it already containts a `Bender.yml` in its repository, you can add it as a dependency in the `Bender.yml` and reading the guide below.
+
+## Custom Accelerator Integration
+
+### Overview
+
+The Croc SoC is designed to allow easy integration of custom accelerators and peripherals into the **user domain**. This section documents the architecture, integration process, and testing methodology using the MAC (Multiply-Accumulate) accelerator as a reference example.
+
+### Architecture
+
+Custom accelerators are integrated into the **user domain** which operates in a separate address space (`0x2000_0000` to `0x8000_0000`) from the Croc domain. The integration follows these principles:
+
+1. **OBI Protocol**: All user domain subordinates (accelerators/peripherals) communicate via the OBI (Open Bus Interface) protocol
+2. **Address Demultiplexing**: The user domain uses an OBI demultiplexer to route requests to different subordinates based on address ranges
+3. **Modular Design**: Each accelerator is a self-contained OBI subordinate module with its own address space (typically 4KB per accelerator)
+
+### Integration Steps
+
+#### 1. Create Accelerator RTL Module
+
+Create your accelerator in `rtl/user_domain/your_accelerator.sv` with an OBI subordinate interface:
+
+```systemverilog
+module your_accelerator (
+  input  logic        clk_i,
+  input  logic        rst_ni,
+  
+  // OBI subordinate interface
+  input  sbr_obi_req_t obi_req_i,
+  output sbr_obi_rsp_t obi_rsp_o
+);
+  // Implementation...
+endmodule
+```
+
+The OBI interface includes:
+- **Request**: `obi_req_i.a` with address, data, and control signals
+- **Response**: `obi_rsp_o.r` with read data and grant/valid handshakes
+
+#### 2. Update `rtl/user_pkg.sv`
+
+Define your accelerator's address space in the user package:
+
+```systemverilog
+// Number of subordinates (increment this)
+localparam int unsigned NumUserDomainSubordinates = 3;  // ROM + MAC + Your Accelerator
+
+// Define address map for your accelerator
+localparam bit [31:0] YourAccelAddrOffset = UserBaseAddr + 32'h0000_2000;  // 0x2000_2000
+localparam bit [31:0] YourAccelAddrRange  = 32'h0000_1000;  // 4 KB
+
+// Add to user_demux_outputs_e enum
+typedef enum int {
+  UserRom        = 0,
+  UserMacAccel   = 1,
+  UserYourAccel  = 2,
+  UserError      = 3
+} user_demux_outputs_e;
+
+// Add address rule
+localparam croc_pkg::addr_map_rule_t [NumDemuxSbrRules-1:0] user_addr_map = '{
+  // ... existing rules ...
+  '{ idx: UserYourAccel,
+     start_addr: YourAccelAddrOffset,
+     end_addr:   YourAccelAddrOffset + YourAccelAddrRange }
+};
+```
+
+#### 3. Instantiate in `rtl/user_domain.sv`
+
+Add signal declarations and module instantiation:
+
+```systemverilog
+// Declare OBI buses for your accelerator
+sbr_obi_req_t user_your_accel_obi_req;
+sbr_obi_rsp_t user_your_accel_obi_rsp;
+
+// Fanout from demux
+assign user_your_accel_obi_req            = all_user_sbr_obi_req[UserYourAccel];
+assign all_user_sbr_obi_rsp[UserYourAccel] = user_your_accel_obi_rsp;
+
+// Instantiate your accelerator
+your_accelerator i_your_accel (
+  .clk_i,
+  .rst_ni,
+  .obi_req_i ( user_your_accel_obi_req ),
+  .obi_rsp_o ( user_your_accel_obi_rsp )
+);
+```
+
+#### 4. Update `Bender.yml`
+
+Add your accelerator RTL file to the sources section:
+
+```yaml
+sources:
+  - rtl/user_domain/your_accelerator.sv
+```
+
+### Memory Map Example
+
+Each accelerator occupies 4KB of address space. Addresses are word-aligned (increments of 4 bytes):
+
+| Address Offset | Register | Width | R/W | Purpose |
+|---|---|---|---|---|
+| `0x00` | operand_a | 32b | RW | First operand or control |
+| `0x04` | operand_b | 32b | RW | Second operand or control |
+| `0x08` | operand_c | 32b | RW | Third operand or control |
+| `0x0C` | result | 32b | R | Computation result |
+| `0x10` | status | 32b | R | Done flag / status |
+| `0x14` | control | 32b | W | Start / trigger signal |
+
+### Testing Your Accelerator
+
+#### Hardware Test (C Software)
+
+Create a test program in `sw/your_accel_test.c`:
+
+You can find an example inside sw/mac_test.c
+
+#### RTL Simulation
+
+```bash
+# Include your accelerator in simulation
+make yosys-flist    # Regenerate file list
+make verilator SW_HEX=sw/bin/your_test.hex     # Run simulation
+```
+
+### OBI Protocol Reference
+
+The OBI subordinate interface requires proper handshaking:
+
+- **Grant (gnt)**: Subordinate asserts to accept a request (typically `!rsp_pending`)
+- **Request Valid (req)**: Manager asserts when presenting a valid request
+- **Response Valid (rvalid)**: Subordinate asserts for one cycle with read response
+- **Address (addr[31:0])**: Word-aligned address from manager
+- **Write Enable (we)**: High for writes, low for reads
+- **Write Data (wdata[31:0])**: Data to write
+- **Read Data (rdata[31:0])**: Data returned for reads
+
+### Common Register Patterns
+
+**Compute-then-read pattern** (as used in MAC accelerator):
+1. Write inputs to input registers
+2. Write to control register to start computation
+3. Poll status register for completion
+4. Read result register when done
+
+**Immediate response pattern** (for registers without computation):
+- Respond to reads/writes within the same cycle
+
+### Integration Checklist
+
+- [ ] Create RTL module with OBI subordinate interface
+- [ ] Define address range in `rtl/user_pkg.sv`
+- [ ] Add enum entry to `user_demux_outputs_e`
+- [ ] Add address rule to `user_addr_map`
+- [ ] Add signal declarations in `rtl/user_domain.sv`
+- [ ] Instantiate module in `rtl/user_domain.sv`
+- [ ] Add RTL file to `Bender.yml` sources
+- [ ] Create C test program in `sw/`
+- [ ] Test with `make yosys-flist && make verilator`
+- [ ] Run hardware test via UART
+
+### Files to Modify
+
+| File | Purpose |
+|---|---|
+| `rtl/user_domain/your_accelerator.sv` | Create new accelerator RTL |
+| `rtl/user_pkg.sv` | Add address map definitions |
+| `rtl/user_domain.sv` | Instantiate accelerator |
+| `Bender.yml` | Add RTL files to sources |
+| `sw/your_accel_test.c` | Create test program |
+
+### Reference Implementation
+
+The MAC accelerator (`rtl/user_domain/mac_accelerator.sv`) demonstrates a complete integration:
+- OBI subordinate with request/response handling
+- Register-based interface with address decoding
+- Computation triggered by control register write
+- Status polling pattern for synchronization
+
+Refer to it as a template for your custom accelerators.
 
 ## Bender
 The dependency manager [Bender](https://github.com/pulp-platform/bender) is used in most pulp-platform IPs.
