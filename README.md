@@ -145,6 +145,10 @@ curl --proto '=https' --tlsv1.2 https://pulp-platform.github.io/bender/init -sSf
 ```
 This installs bender in your current directory, recommended to move the binary to /usr/bin
 
+#### Klayout Install
+
+You can download the deb package from [ https://www.klayout.de/build.html ] and install it using apt to obtain the latest version ( Default sudo apt klayout returns an older binary )
+
 
 #### Docker (easy) 
 There are two possible ways, the easiest way is to install docker and work in the docker container, you can follow the install guides on the [Docker Website](https://docs.docker.com/desktop/).  
