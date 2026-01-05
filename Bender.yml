@@ -32,6 +32,7 @@ sources:
   - rtl/gpio/gpio_reg_pkg.sv
   - rtl/clint/clint_reg_pkg.sv
   - rtl/obi_timer/obi_timer_reg_pkg.sv
+  - rtl/user_domain/mac_accelerator.sv
   # add your design files containing anything but modules (packages) here
 
     # RTL

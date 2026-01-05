@@ -70,10 +70,21 @@ $(BINDIR)/%.hex: $(BINDIR)/%.elf
 	$(RISCV_OBJCOPY) -O verilog $< $@
 
 # Phonies
-.PHONY: all clean compile
+.PHONY: all clean compile run-test run-mac-test run-helloworld
 
 clean:
 	rm -rf $(BINDIR)
 	rm -f *.o
 
 compile: $(BINDIR) $(ALL_TARGETS)
+
+# Run specific test (default: mac_test)
+run-test: run-mac-test
+
+# Run mac_test firmware
+run-mac-test: $(BINDIR)/mac_test.hex
+	cd verilator && obj_dir/Vtb_croc_soc +binary="$(realpath ../sw/$(BINDIR)/mac_test.hex)"
+
+# Run helloworld firmware (legacy default)
+run-helloworld: $(BINDIR)/helloworld.hex
+	cd verilator && obj_dir/Vtb_croc_soc +binary="$(realpath ../sw/$(BINDIR)/helloworld.hex)"
