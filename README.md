@@ -182,7 +182,7 @@ To run the synthesis and place & route flow execute:
 make checkout # fetched ihp130 pdk files
 make yosys # generates flattened netlist from the source RTL files
 make openroad # performs placement, routing and lef file generation
-make klayout # streams gds from the generated lef file
+make klayout # streams gds from the generated def file
 ```
 
 To simulate you can use:
