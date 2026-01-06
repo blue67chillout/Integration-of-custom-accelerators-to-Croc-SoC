@@ -179,7 +179,7 @@ If something does not work, refer to the upstream [IIC-OSIC-Tools](https://githu
 The SoC is fully functional as-is and a simple software example is provided for simulation.
 To run the synthesis and place & route flow execute:
 ```sh
-make checkout # fetched ihp130 pdk files
+make checkout # fetches ihp130 pdk files
 make yosys # generates flattened netlist from the source RTL files
 make openroad # performs placement, routing and lef file generation
 make klayout # streams gds from the generated def file
