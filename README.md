@@ -92,7 +92,7 @@ Cell/Module placement                      |  Routing
 ![Chip module view](doc/croc_modules.jpg)  |  ![Chip routed](doc/croc_routed.jpg)
 
 
-### Local Installation
+### Local Installation ( Linux/WSL)
 
 #### RISC-V Toolchain Install 
 
@@ -148,6 +148,15 @@ This installs bender in your current directory, recommended to move the binary t
 #### Klayout Install
 
 You can download the deb package from [ https://www.klayout.de/build.html ] and install it using apt to obtain the latest version ( Default sudo apt klayout returns an older binary )
+
+
+### Local Installation ( Mac )
+
+Install Librelane through Nix
+
+https://librelane.readthedocs.io/en/latest/installation/nix_installation/installation_macos.html
+
+Also clone the librelane repository and run `nix-shell` to activate the full librelane environment, post that, you can cd to your croc directory, and run all the commands from there
 
 
 #### Docker (easy) 
