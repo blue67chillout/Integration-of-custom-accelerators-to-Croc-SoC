@@ -98,7 +98,7 @@ Cell/Module placement                      |  Routing
 
 ```sh
 wget https://github.com/xpack-dev-tools/riscv-none-elf-gcc-xpack/releases/download/v14.2.0-2/xpack-riscv-none-elf-gcc-14.2.0-2-linux-x64.tar.gz
-tar -xzf xpack-riscv-none-elf-gcc-14.2.0-2-linux-x64.tar.gz -C /opt
+sudo tar -xzf xpack-riscv-none-elf-gcc-14.2.0-2-linux-x64.tar.gz -C /opt
 
 ```
 Just append the export of this newly installed riscv toolchain path later to your .[shell]rc file
@@ -156,7 +156,7 @@ Install Librelane through Nix
 
 https://librelane.readthedocs.io/en/latest/installation/nix_installation/installation_macos.html
 
-Also clone the librelane repository and run `nix-shell` to activate the full librelane environment, post that, you can cd to your croc directory, and run all the commands from there
+Also, clone the LibreLane repository and run nix-shell to activate the full LibreLane environment. After that, navigate to your CROC directory and run all the commands from there.
 
 
 #### Docker (easy) 
